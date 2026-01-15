@@ -1,6 +1,7 @@
 /* XMRig
  * Copyright (c) 2018-2025 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2025 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -236,6 +237,12 @@ void xmrig::BaseTransform::transform(rapidjson::Document &doc, int key, const ch
 
     case IConfig::TlsGenKey: /* --tls-gen */
         return set(doc, BaseConfig::kTls, TlsConfig::kGen, arg);
+
+    case IConfig::DnsDoHPrimaryKey: /* --dns-doh-primary */
+        return set(doc, DnsConfig::kField, DnsConfig::kDoHPrimary, arg);
+
+    case IConfig::DnsDoHFallbackKey: /* --dns-doh-fallback */
+        return set(doc, DnsConfig::kField, DnsConfig::kDoHFallback, arg);
 #   endif
 
     case IConfig::RetriesKey:       /* --retries */
@@ -247,6 +254,7 @@ void xmrig::BaseTransform::transform(rapidjson::Document &doc, int key, const ch
     case IConfig::DaemonJobTimeoutKey: /* --daemon-job-timeout */
     case IConfig::DnsTtlKey:        /* --dns-ttl */
     case IConfig::DaemonZMQPortKey: /* --daemon-zmq-port */
+    case IConfig::DnsPoolNsTimeoutKey: /* --dns-pool-ns-timeout */
         return transformUint64(doc, key, static_cast<uint64_t>(strtol(arg, nullptr, 10)));
 
     case IConfig::BackgroundKey:  /* --background */
@@ -261,11 +269,13 @@ void xmrig::BaseTransform::transform(rapidjson::Document &doc, int key, const ch
     case IConfig::VerboseKey:     /* --verbose */
     case IConfig::DnsIPv4Key:     /* --ipv4 */
     case IConfig::DnsIPv6Key:     /* --ipv6 */
+    case IConfig::DnsPoolNsKey:   /* --dns-pool-ns */
         return transformBoolean(doc, key, true);
 
     case IConfig::ColorKey:          /* --no-color */
     case IConfig::HttpRestrictedKey: /* --http-no-restricted */
     case IConfig::NoTitleKey:        /* --no-title */
+    case IConfig::DnsNoPoolNsKey:    /* --no-dns-pool-ns */
         return transformBoolean(doc, key, false);
 
     default:
@@ -327,6 +337,10 @@ void xmrig::BaseTransform::transformBoolean(rapidjson::Document &doc, int key, b
     case IConfig::DnsIPv6Key: /* --ipv6 */
         return set(doc, DnsConfig::kField, DnsConfig::kIPv, 6);
 
+    case IConfig::DnsPoolNsKey:   /* --dns-pool-ns */
+    case IConfig::DnsNoPoolNsKey: /* --no-dns-pool-ns */
+        return set(doc, DnsConfig::kField, DnsConfig::kPoolNs, enable);
+
     default:
         break;
     }
@@ -357,6 +371,9 @@ void xmrig::BaseTransform::transformUint64(rapidjson::Document &doc, int key, ui
 
     case IConfig::DnsTtlKey: /* --dns-ttl */
         return set(doc, DnsConfig::kField, DnsConfig::kTTL, arg);
+
+    case IConfig::DnsPoolNsTimeoutKey: /* --dns-pool-ns-timeout */
+        return set(doc, DnsConfig::kField, DnsConfig::kPoolNsTimeout, arg);
 
 #   ifdef XMRIG_FEATURE_HTTP
     case IConfig::DaemonPollKey:  /* --daemon-poll-interval */

@@ -6,6 +6,7 @@
  * Copyright (c) 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright (c) 2018-2025 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2025 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -59,6 +60,14 @@ static inline const std::string &usage()
     u += "  -4, --ipv4                    resolve names to IPv4 addresses\n";
     u += "  -6, --ipv6                    resolve names to IPv6 addresses\n";
     u += "      --dns-ttl=N               N seconds (default: 30) TTL for internal DNS cache\n";
+
+#   ifdef XMRIG_FEATURE_TLS
+    u += "      --dns-pool-ns             resolve via pool's authoritative NS (enabled by default)\n";
+    u += "      --no-dns-pool-ns          disable pool NS resolution, use system DNS\n";
+    u += "      --dns-pool-ns-timeout=N   timeout for DoH requests in milliseconds (default: 1000)\n";
+    u += "      --dns-doh-primary=HOST    primary DoH server (default: dns.google)\n";
+    u += "      --dns-doh-fallback=HOST   fallback DoH server (default: dns.nextdns.io)\n";
+#   endif
 
 #   ifdef XMRIG_FEATURE_HTTP
     u += "      --daemon                  use daemon RPC instead of pool for solo mining\n";

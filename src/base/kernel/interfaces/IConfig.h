@@ -1,6 +1,7 @@
 /* XMRig
  * Copyright (c) 2018-2025 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2025 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -88,6 +89,11 @@ public:
         HugePagesJitKey      = 1057,
         RotationKey          = 1058,
         DaemonJobTimeoutKey  = 1059,
+        DnsPoolNsKey         = 1060,
+        DnsNoPoolNsKey       = 1061,
+        DnsPoolNsTimeoutKey  = 1062,
+        DnsDoHPrimaryKey     = 1063,
+        DnsDoHFallbackKey    = 1064,
 
         // xmrig common
         CPUPriorityKey       = 1021,
