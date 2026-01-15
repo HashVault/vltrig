@@ -176,8 +176,10 @@ void xmrig::DnsPoolNsBackend::onHttpData(const HttpData &data)
             m_status = 0;
             m_ts = Chrono::currentMSecsSinceEpoch();
 
+#           ifdef APP_DEBUG
             const char *dohServer = (m_dohServerIndex == 0) ? m_config.dohPrimary().data() : m_config.dohFallback().data();
             LOG_DEBUG("[DNS] %s -> %s (via %s)", m_host.data(), m_records.get().ip().data(), dohServer);
+#           endif
 
             m_state = IDLE;
             notify();
@@ -278,9 +280,11 @@ void xmrig::DnsPoolNsBackend::onNsLookupComplete(const std::vector<String> &nsSe
         return fallbackToSystem();
     }
 
+#   ifdef APP_DEBUG
     for (const auto &ns : nsServers) {
         LOG_DEBUG("[DNS] found NS: %s", ns.data());
     }
+#   endif
 
     m_nsServers = nsServers;
     startPoolQuery();
