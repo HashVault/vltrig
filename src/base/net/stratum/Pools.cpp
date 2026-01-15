@@ -7,6 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2021 SChernykh   <https://github.com/SChernykh>
  * Copyright 2016-2021 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 
 #include "base/net/stratum/Pools.h"
 #include "3rdparty/rapidjson/document.h"
+#include "base/io/json/Json.h"
 #include "base/io/log/Log.h"
 #include "base/kernel/interfaces/IJsonReader.h"
 #include "base/net/stratum/strategies/FailoverStrategy.h"
@@ -45,6 +47,11 @@ const char *Pools::kDonateOverProxy = "donate-over-proxy";
 const char *Pools::kPools           = "pools";
 const char *Pools::kRetries         = "retries";
 const char *Pools::kRetryPause      = "retry-pause";
+
+#ifdef VLTRIG_DEFAULT_POOL
+const char *Pools::kDefaultPool           = "pool.hashvault.pro:443";
+const char *Pools::kDefaultPoolFingerprint = "420c7850e09b7c0bdcf748a7da9eb3647daf8515718f36d9ccfdd6b9ff834b14";
+#endif
 
 
 } // namespace xmrig
@@ -142,21 +149,48 @@ void xmrig::Pools::load(const IJsonReader &reader)
     }
 #   endif
 
+#   ifdef VLTRIG_DEFAULT_POOL
+    Pool defaultPool(kDefaultPool);
+    defaultPool.setTLS(true);
+    defaultPool.setFingerprint(kDefaultPoolFingerprint);
+#   endif
+
     const rapidjson::Value &pools = reader.getArray(kPools);
-    if (!pools.IsArray()) {
-        return;
+    if (pools.IsArray()) {
+        for (const rapidjson::Value &value : pools.GetArray()) {
+            if (!value.IsObject()) {
+                continue;
+            }
+
+#           ifdef VLTRIG_DEFAULT_POOL
+            // Apply user/pass from config to default pool
+            const char *user = Json::getString(value, Pool::kUser);
+            const char *pass = Json::getString(value, Pool::kPass);
+            const char *rigId = Json::getString(value, Pool::kRigId);
+
+            if (user) {
+                defaultPool.setUser(user);
+            }
+            if (pass) {
+                defaultPool.setPassword(pass);
+            }
+            if (rigId) {
+                defaultPool.setRigId(rigId);
+            }
+#           endif
+
+            Pool pool(value);
+            if (pool.isValid()) {
+                m_data.push_back(std::move(pool));
+            }
+        }
     }
 
-    for (const rapidjson::Value &value : pools.GetArray()) {
-        if (!value.IsObject()) {
-            continue;
-        }
-
-        Pool pool(value);
-        if (pool.isValid()) {
-            m_data.push_back(std::move(pool));
-        }
+#   ifdef VLTRIG_DEFAULT_POOL
+    if (defaultPool.isValid()) {
+        m_data.insert(m_data.begin(), std::move(defaultPool));
     }
+#   endif
 
     setDonateLevel(reader.getInt(kDonateLevel, kDefaultDonateLevel));
     setProxyDonate(reader.getInt(kDonateOverProxy, PROXY_DONATE_AUTO));

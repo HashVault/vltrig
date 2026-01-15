@@ -7,6 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2021 SChernykh   <https://github.com/SChernykh>
  * Copyright 2016-2021 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -48,6 +49,11 @@ public:
     static const char *kPools;
     static const char *kRetries;
     static const char *kRetryPause;
+
+#   ifdef VLTRIG_DEFAULT_POOL
+    static const char *kDefaultPool;
+    static const char *kDefaultPoolFingerprint;
+#   endif
 
     enum ProxyDonate {
         PROXY_DONATE_NONE,

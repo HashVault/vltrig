@@ -2,6 +2,7 @@
  * Copyright (c) 2019      Howard Chu  <https://github.com/hyc>
  * Copyright (c) 2018-2024 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2024 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -116,10 +117,12 @@ public:
     inline uint64_t pollInterval() const                { return m_pollInterval; }
     inline uint64_t jobTimeout() const                  { return m_jobTimeout; }
     inline void setAlgo(const Algorithm &algorithm)     { m_algorithm = algorithm; }
-    inline void setUrl(const char *url)                 { m_url = Url(url); }
+    inline void setFingerprint(const String &fp)        { m_fingerprint = fp; }
     inline void setPassword(const String &password)     { m_password = password; }
     inline void setProxy(const ProxyUrl &proxy)         { m_proxy = proxy; }
     inline void setRigId(const String &rigId)           { m_rigId = rigId; }
+    inline void setTLS(bool enable)                     { m_flags.set(FLAG_TLS, enable); }
+    inline void setUrl(const char *url)                 { m_url = Url(url); }
     inline void setUser(const String &user)             { m_user = user; }
 
     inline bool operator!=(const Pool &other) const     { return !isEqual(other); }
