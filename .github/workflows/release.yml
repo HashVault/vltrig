@@ -20,27 +20,35 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          apk add --no-cache git build-base cmake linux-headers \
+          apk add --no-cache git build-base cmake linux-headers wget \
                              libuv-dev libuv-static openssl-dev openssl-libs-static \
-                             hwloc-dev nghttp2-dev nghttp2-static
+                             nghttp2-dev nghttp2-static
 
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Build hwloc static
+        run: |
+          cd scripts
+          sh build.hwloc.sh
+
       - name: Build
         run: |
           mkdir -p build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF -DXMRIG_DEPS=scripts/deps
           make -j$(nproc)
           strip vltrig
+
+      - name: Stage artifact
+        run: |
+          mkdir -p staging
+          cp build/vltrig scripts/vltrig/run.sh staging/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: vltrig-${{ env.VERSION }}-linux-x64
-          path: |
-            build/vltrig
-            scripts/vltrig/run.sh
+          path: staging/*
 
   windows-gcc:
     runs-on: windows-latest
@@ -58,27 +66,34 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-libuv
             mingw-w64-ucrt-x86_64-openssl
-            mingw-w64-ucrt-x86_64-hwloc
             mingw-w64-ucrt-x86_64-nghttp2
-            make git
+            make git wget automake autoconf libtool
 
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Build hwloc static
+        run: |
+          cd scripts
+          sh build.hwloc.sh
+
       - name: Build
         run: |
           mkdir -p build && cd build
-          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF
+          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF -DXMRIG_DEPS=scripts/deps -DCMAKE_PREFIX_PATH="${MSYSTEM_PREFIX}"
           make -j$(nproc)
           strip vltrig.exe || true
+
+      - name: Stage artifact
+        run: |
+          mkdir -p staging
+          cp build/vltrig.exe scripts/vltrig/run.cmd staging/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: vltrig-${{ env.VERSION }}-windows-gcc-x64
-          path: |
-            build/vltrig.exe
-            scripts/vltrig/run.cmd
+          path: staging/*
 
   macos-x64:
     runs-on: macos-15
@@ -93,13 +108,16 @@ jobs:
       - name: Build
         run: make release-ci
 
+      - name: Stage artifact
+        run: |
+          mkdir -p staging
+          cp build/vltrig scripts/vltrig/run.sh staging/
+
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: vltrig-${{ env.VERSION }}-macos-x64
-          path: |
-            build/vltrig
-            scripts/vltrig/run.sh
+          path: staging/*
 
   macos-arm64:
     runs-on: macos-latest
@@ -114,13 +132,16 @@ jobs:
       - name: Build
         run: make release-ci
 
+      - name: Stage artifact
+        run: |
+          mkdir -p staging
+          cp build/vltrig scripts/vltrig/run.sh staging/
+
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: vltrig-${{ env.VERSION }}-macos-arm64
-          path: |
-            build/vltrig
-            scripts/vltrig/run.sh
+          path: staging/*
 
   release:
     needs: [linux, windows-gcc, macos-x64, macos-arm64]
@@ -134,24 +155,13 @@ jobs:
       - name: Package artifacts
         run: |
           cd artifacts
-          mkdir -p staging
 
-          cp vltrig-${{ env.VERSION }}-linux-x64/build/vltrig vltrig-${{ env.VERSION }}-linux-x64/scripts/vltrig/run.sh staging/
-          tar -czvf vltrig-${{ env.VERSION }}-linux-x64.tar.gz -C staging .
-          rm staging/*
+          tar -czvf vltrig-${{ env.VERSION }}-linux-x64.tar.gz -C vltrig-${{ env.VERSION }}-linux-x64 .
+          tar -czvf vltrig-${{ env.VERSION }}-macos-x64.tar.gz -C vltrig-${{ env.VERSION }}-macos-x64 .
+          tar -czvf vltrig-${{ env.VERSION }}-macos-arm64.tar.gz -C vltrig-${{ env.VERSION }}-macos-arm64 .
+          cd vltrig-${{ env.VERSION }}-windows-gcc-x64 && zip ../vltrig-${{ env.VERSION }}-windows-gcc-x64.zip * && cd ..
 
-          cp vltrig-${{ env.VERSION }}-macos-x64/build/vltrig vltrig-${{ env.VERSION }}-macos-x64/scripts/vltrig/run.sh staging/
-          tar -czvf vltrig-${{ env.VERSION }}-macos-x64.tar.gz -C staging .
-          rm staging/*
-
-          cp vltrig-${{ env.VERSION }}-macos-arm64/build/vltrig vltrig-${{ env.VERSION }}-macos-arm64/scripts/vltrig/run.sh staging/
-          tar -czvf vltrig-${{ env.VERSION }}-macos-arm64.tar.gz -C staging .
-          rm staging/*
-
-          cp vltrig-${{ env.VERSION }}-windows-gcc-x64/build/vltrig.exe vltrig-${{ env.VERSION }}-windows-gcc-x64/scripts/vltrig/run.cmd staging/
-          cd staging && zip ../vltrig-${{ env.VERSION }}-windows-gcc-x64.zip * && cd ..
-
-          rm -rf staging vltrig-${{ env.VERSION }}-*
+          rm -rf vltrig-${{ env.VERSION }}-*/
 
       - name: Generate checksums
         run: |

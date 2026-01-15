@@ -21,8 +21,8 @@ A fork of [XMRig](https://github.com/xmrig/xmrig) miner tailored for [HashVault]
 
 Prebuilt binaries are available on the [Releases](https://github.com/HashVault/vltrig/releases) page:
 
-- Linux x64
-- Windows x64 (GCC and MSVC builds)
+- Linux x64 (static, musl libc)
+- Windows x64
 - macOS x64 and ARM64 (Apple Silicon)
 
 **Note:** Prebuilt binaries are CPU-only (no OpenCL/CUDA). For GPU mining, build from source with `-DWITH_OPENCL=ON` and/or `-DWITH_CUDA=ON`.

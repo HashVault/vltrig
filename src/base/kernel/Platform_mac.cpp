@@ -112,7 +112,11 @@ bool xmrig::Platform::isOnBatteryPower()
 uint64_t xmrig::Platform::idleTime()
 {
     uint64_t idle_time  = 0;
+#   if __MAC_OS_X_VERSION_MAX_ALLOWED >= 120000
+    const auto service  = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOHIDSystem"));
+#   else
     const auto service  = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOHIDSystem"));
+#   endif
     const auto property = IORegistryEntryCreateCFProperty(service, CFSTR("HIDIdleTime"), kCFAllocatorDefault, 0);
 
     CFNumberGetValue((CFNumberRef)property, kCFNumberSInt64Type, &idle_time);
