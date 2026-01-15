@@ -80,7 +80,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p build && cd build
-          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF -DXMRIG_DEPS=scripts/deps -DCMAKE_PREFIX_PATH="${MSYSTEM_PREFIX}"
+          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF -DCMAKE_PREFIX_PATH="${PWD}/../scripts/deps;${MSYSTEM_PREFIX}"
           make -j$(nproc)
           strip vltrig.exe || true
 
