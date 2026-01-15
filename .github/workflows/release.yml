@@ -11,7 +11,7 @@ on:
         default: 'test'
 
 env:
-  VERSION: ${{ github.ref_name || inputs.version || 'dev' }}
+  VERSION: ${{ inputs.version || github.ref_name }}
 
 jobs:
   linux:
@@ -43,6 +43,7 @@ jobs:
         run: |
           mkdir -p staging
           cp build/vltrig scripts/vltrig/run.sh staging/
+          cd staging && sha256sum * > SHA256SUMS
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
@@ -80,7 +81,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p build && cd build
-          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF -DCMAKE_PREFIX_PATH="${PWD}/../scripts/deps;${MSYSTEM_PREFIX}"
+          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF -DXMRIG_DEPS=scripts/deps -DCMAKE_PREFIX_PATH="${MSYSTEM_PREFIX}"
           make -j$(nproc)
           strip vltrig.exe || true
 
@@ -88,6 +89,7 @@ jobs:
         run: |
           mkdir -p staging
           cp build/vltrig.exe scripts/vltrig/run.cmd staging/
+          cd staging && sha256sum * > SHA256SUMS
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
@@ -112,6 +114,7 @@ jobs:
         run: |
           mkdir -p staging
           cp build/vltrig scripts/vltrig/run.sh staging/
+          cd staging && shasum -a 256 * > SHA256SUMS
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
@@ -136,6 +139,7 @@ jobs:
         run: |
           mkdir -p staging
           cp build/vltrig scripts/vltrig/run.sh staging/
+          cd staging && shasum -a 256 * > SHA256SUMS
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6

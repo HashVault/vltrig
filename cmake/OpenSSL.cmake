@@ -1,5 +1,7 @@
 if (WITH_TLS)
-    set(OPENSSL_ROOT_DIR ${XMRIG_DEPS})
+    if (XMRIG_DEPS AND EXISTS "${XMRIG_DEPS}/include/openssl")
+        set(OPENSSL_ROOT_DIR ${XMRIG_DEPS})
+    endif()
 
     if (WIN32)
         set(OPENSSL_USE_STATIC_LIBS TRUE)
