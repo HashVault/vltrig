@@ -23,3 +23,10 @@ set(NGHTTP2_INCLUDE_DIRS ${NGHTTP2_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(NGHTTP2 DEFAULT_MSG NGHTTP2_LIBRARY NGHTTP2_INCLUDE_DIR)
+
+if (NGHTTP2_LIBRARY AND WIN32)
+    get_filename_component(NGHTTP2_LIB_NAME ${NGHTTP2_LIBRARY} NAME)
+    if (NGHTTP2_LIB_NAME MATCHES "\\.a$")
+        add_definitions(-DNGHTTP2_STATICLIB)
+    endif()
+endif()

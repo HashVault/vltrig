@@ -29,16 +29,13 @@ jobs:
       - name: Build
         run: make release-ci
 
-      - name: Package
-        run: |
-          cd build
-          tar -czvf vltrig-${{ env.VERSION }}-linux-x64.tar.gz vltrig
-
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: vltrig-${{ env.VERSION }}-linux-x64
-          path: build/vltrig-*.tar.gz
+          name: linux-x64
+          path: |
+            build/vltrig
+            scripts/vltrig/run.sh
 
   windows-gcc:
     runs-on: windows-latest
@@ -70,17 +67,13 @@ jobs:
           make -j$(nproc)
           strip vltrig.exe || true
 
-      - name: Package
-        shell: pwsh
-        run: |
-          cd build
-          7z a vltrig-${{ env.VERSION }}-windows-gcc-x64.zip vltrig.exe
-
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: vltrig-${{ env.VERSION }}-windows-gcc-x64
-          path: build/vltrig-*-windows-gcc-x64.zip
+          name: windows-gcc-x64
+          path: |
+            build/vltrig.exe
+            scripts/vltrig/run.cmd
 
   macos-x64:
     runs-on: macos-15
@@ -95,16 +88,13 @@ jobs:
       - name: Build
         run: make release-ci
 
-      - name: Package
-        run: |
-          cd build
-          tar -czvf vltrig-${{ env.VERSION }}-macos-x64.tar.gz vltrig
-
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: vltrig-${{ env.VERSION }}-macos-x64
-          path: build/vltrig-*.tar.gz
+          name: macos-x64
+          path: |
+            build/vltrig
+            scripts/vltrig/run.sh
 
   macos-arm64:
     runs-on: macos-latest
@@ -119,16 +109,13 @@ jobs:
       - name: Build
         run: make release-ci
 
-      - name: Package
-        run: |
-          cd build
-          tar -czvf vltrig-${{ env.VERSION }}-macos-arm64.tar.gz vltrig
-
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: vltrig-${{ env.VERSION }}-macos-arm64
-          path: build/vltrig-*.tar.gz
+          name: macos-arm64
+          path: |
+            build/vltrig
+            scripts/vltrig/run.sh
 
   release:
     needs: [linux, windows-gcc, macos-x64, macos-arm64]
@@ -139,11 +126,31 @@ jobs:
         with:
           path: artifacts
 
+      - name: Package artifacts
+        run: |
+          cd artifacts
+          mkdir -p staging
+
+          cp linux-x64/build/vltrig linux-x64/scripts/vltrig/run.sh staging/
+          tar -czvf vltrig-${{ env.VERSION }}-linux-x64.tar.gz -C staging .
+          rm staging/*
+
+          cp macos-x64/build/vltrig macos-x64/scripts/vltrig/run.sh staging/
+          tar -czvf vltrig-${{ env.VERSION }}-macos-x64.tar.gz -C staging .
+          rm staging/*
+
+          cp macos-arm64/build/vltrig macos-arm64/scripts/vltrig/run.sh staging/
+          tar -czvf vltrig-${{ env.VERSION }}-macos-arm64.tar.gz -C staging .
+          rm staging/*
+
+          cp windows-gcc-x64/build/vltrig.exe windows-gcc-x64/scripts/vltrig/run.cmd staging/
+          cd staging && zip ../vltrig-${{ env.VERSION }}-windows-gcc-x64.zip * && cd ..
+
+          rm -rf staging linux-x64 macos-x64 macos-arm64 windows-gcc-x64
+
       - name: Generate checksums
         run: |
           cd artifacts
-          find . -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec mv {} . \;
-          rm -rf */
           sha256sum * > SHA256SUMS
           cat SHA256SUMS
 
