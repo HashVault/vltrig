@@ -175,11 +175,14 @@ jobs:
           cat SHA256SUMS
 
       - name: Sign checksums
-        if: ${{ secrets.GPG_PRIVATE_KEY != '' }}
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
+          if [ -z "$GPG_PRIVATE_KEY" ]; then
+            echo "GPG_PRIVATE_KEY not set, skipping signing"
+            exit 0
+          fi
           echo "$GPG_PRIVATE_KEY" | gpg --batch --import
           cd artifacts
           echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
