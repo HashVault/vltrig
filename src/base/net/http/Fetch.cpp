@@ -1,6 +1,7 @@
 /* XMRig
  * Copyright (c) 2018-2021 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2021 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,6 +27,10 @@
 
 #ifdef XMRIG_FEATURE_TLS
 #   include "base/net/https/HttpsClient.h"
+#endif
+
+#ifdef XMRIG_FEATURE_HTTP2
+#   include "base/net/http2/Http2Client.h"
 #endif
 
 
@@ -97,8 +102,8 @@ void xmrig::FetchRequest::setBody(const rapidjson::Value &value)
 void xmrig::fetch(const char *tag, FetchRequest &&req, const std::weak_ptr<IHttpListener> &listener, int type, uint64_t rpcId)
 {
 #   ifdef APP_DEBUG
-    LOG_DEBUG(CYAN("http%s://%s:%u ") MAGENTA_BOLD("\"%s %s\"") BLACK_BOLD(" body: ") CYAN_BOLD("%zu") BLACK_BOLD(" bytes"),
-              req.tls ? "s" : "", req.host.data(), req.port, llhttp_method_name(req.method), req.path.data(), req.body.size());
+    LOG_DEBUG("%s " CYAN("http%s://%s:%u ") MAGENTA_BOLD("\"%s %s\"") BLACK_BOLD(" body: ") CYAN_BOLD("%zu") BLACK_BOLD(" bytes"),
+              tag, req.tls ? "s" : "", req.host.data(), req.port, llhttp_method_name(req.method), req.path.data(), req.body.size());
 
     if (req.hasBody() && req.body.size() < (Log::kMaxBufferSize - 1024) && req.headers.count(HttpData::kContentType) && req.headers.at(HttpData::kContentType) == HttpData::kApplicationJson) {
         Log::print(BLUE_BG_BOLD("%s:") BLACK_BOLD_S " %.*s", req.headers.at(HttpData::kContentType).c_str(), static_cast<int>(req.body.size()), req.body.c_str());
@@ -108,7 +113,15 @@ void xmrig::fetch(const char *tag, FetchRequest &&req, const std::weak_ptr<IHttp
     HttpClient *client = nullptr;
 #   ifdef XMRIG_FEATURE_TLS
     if (req.tls) {
-        client = new HttpsClient(tag, std::move(req), listener);
+#       ifdef XMRIG_FEATURE_HTTP2
+        if (req.http2 || req.path == "/dns-query") {
+            client = new Http2Client(tag, std::move(req), listener);
+        }
+        else
+#       endif
+        {
+            client = new HttpsClient(tag, std::move(req), listener);
+        }
     }
     else
 #   endif

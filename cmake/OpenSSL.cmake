@@ -41,7 +41,24 @@ if (WITH_TLS)
                 src/base/net/https/HttpsContext.h
                 src/base/net/https/HttpsServer.cpp
                 src/base/net/https/HttpsServer.h
+                src/base/net/dns/DnsPoolNsBackend.cpp
+                src/base/net/dns/DnsPoolNsBackend.h
+                src/base/net/dns/DnsTcpClient.cpp
+                src/base/net/dns/DnsTcpClient.h
+                src/base/net/dns/DnsWireFormat.cpp
+                src/base/net/dns/DnsWireFormat.h
+                src/base/net/dns/DomainUtils.cpp
+                src/base/net/dns/DomainUtils.h
                 )
+
+            if (WITH_HTTP2 AND NGHTTP2_FOUND)
+                set(TLS_SOURCES ${TLS_SOURCES}
+                    src/base/net/http2/Http2Client.cpp
+                    src/base/net/http2/Http2Client.h
+                    )
+                include_directories(${NGHTTP2_INCLUDE_DIR})
+                add_definitions(/DXMRIG_FEATURE_HTTP2)
+            endif()
         endif()
     else()
         message(FATAL_ERROR "OpenSSL NOT found: use `-DWITH_TLS=OFF` to build without TLS support")

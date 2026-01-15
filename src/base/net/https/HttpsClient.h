@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2019 heapwolf    <https://github.com/heapwolf>
  * Copyright (c) 2018-2020 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2020 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -49,20 +50,20 @@ public:
 protected:
     void handshake() override;
     void read(const char *data, size_t size) override;
-
-private:
-    void write(std::string &&data, bool close) override;
-
-    bool verify(X509 *cert);
-    bool verifyFingerprint(X509 *cert);
     void flush(bool close);
+    bool verify(X509 *cert);
 
     BIO *m_read                         = nullptr;
     BIO *m_write                        = nullptr;
     bool m_ready                        = false;
-    char m_fingerprint[32 * 2 + 8]{};
     SSL *m_ssl                          = nullptr;
     SSL_CTX *m_ctx                      = nullptr;
+
+private:
+    void write(std::string &&data, bool close) override;
+    bool verifyFingerprint(X509 *cert);
+
+    char m_fingerprint[32 * 2 + 8]{};
 };
 
 
