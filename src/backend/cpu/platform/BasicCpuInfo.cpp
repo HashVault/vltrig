@@ -2,6 +2,7 @@
  * Copyright (c) 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright (c) 2018-2021 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2021 XMRig       <support@xmrig.com>
+ * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -162,7 +163,6 @@ static inline bool is_vm()          { return has_feature(PROCESSOR_INFO,        
 } // namespace xmrig
 
 
-#ifdef XMRIG_ALGO_ARGON2
 extern "C" {
 
 
@@ -174,7 +174,6 @@ int cpu_flags_has_xop()     { return xmrig::has_xop(); }
 
 
 }
-#endif
 
 
 xmrig::BasicCpuInfo::BasicCpuInfo() :

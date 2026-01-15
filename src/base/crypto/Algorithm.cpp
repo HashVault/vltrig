@@ -360,6 +360,11 @@ std::vector<xmrig::Algorithm> xmrig::Algorithm::all(const std::function<bool(con
     out.reserve(count());
 
     for (const Id algo : order) {
+#       ifdef VLTRIG_RX_ONLY
+        if (isCN(algo)) {
+            continue;
+        }
+#       endif
         if (kAlgorithmNames.count(algo) && (!filter || filter(algo))) {
             out.emplace_back(algo);
         }
