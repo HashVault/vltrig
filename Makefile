@@ -5,7 +5,7 @@ JOBS := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 
 release:
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && cmake .. -DCMAKE_BUILD_TYPE=Release && $(MAKE) -j$(JOBS)
+	@cd $(BUILD_DIR) && cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_OPENCL=OFF -DWITH_CUDA=OFF && $(MAKE) -j$(JOBS)
 
 OPENSSL_ROOT := $(shell brew --prefix openssl 2>/dev/null)
 OPENSSL_FLAG := $(if $(OPENSSL_ROOT),-DOPENSSL_ROOT_DIR=$(OPENSSL_ROOT),)

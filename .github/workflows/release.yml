@@ -15,24 +15,29 @@ env:
 
 jobs:
   linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    container: alpine:latest
     steps:
+      - name: Install dependencies
+        run: |
+          apk add --no-cache git build-base cmake linux-headers \
+                             libuv-dev libuv-static openssl-dev openssl-libs-static \
+                             hwloc-dev nghttp2-dev nghttp2-static
+
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake libuv1-dev libssl-dev \
-                                  libhwloc-dev libnghttp2-dev
-
       - name: Build
-        run: make release-ci
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF
+          make -j$(nproc)
+          strip vltrig
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: linux-x64
+          name: vltrig-${{ env.VERSION }}-linux-x64
           path: |
             build/vltrig
             scripts/vltrig/run.sh
@@ -63,14 +68,14 @@ jobs:
       - name: Build
         run: |
           mkdir -p build && cd build
-          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DWITH_OPENCL=OFF -DWITH_CUDA=OFF
+          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON -DWITH_OPENCL=OFF -DWITH_CUDA=OFF
           make -j$(nproc)
           strip vltrig.exe || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: windows-gcc-x64
+          name: vltrig-${{ env.VERSION }}-windows-gcc-x64
           path: |
             build/vltrig.exe
             scripts/vltrig/run.cmd
@@ -91,7 +96,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: macos-x64
+          name: vltrig-${{ env.VERSION }}-macos-x64
           path: |
             build/vltrig
             scripts/vltrig/run.sh
@@ -112,7 +117,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: macos-arm64
+          name: vltrig-${{ env.VERSION }}-macos-arm64
           path: |
             build/vltrig
             scripts/vltrig/run.sh
@@ -131,22 +136,22 @@ jobs:
           cd artifacts
           mkdir -p staging
 
-          cp linux-x64/build/vltrig linux-x64/scripts/vltrig/run.sh staging/
+          cp vltrig-${{ env.VERSION }}-linux-x64/build/vltrig vltrig-${{ env.VERSION }}-linux-x64/scripts/vltrig/run.sh staging/
           tar -czvf vltrig-${{ env.VERSION }}-linux-x64.tar.gz -C staging .
           rm staging/*
 
-          cp macos-x64/build/vltrig macos-x64/scripts/vltrig/run.sh staging/
+          cp vltrig-${{ env.VERSION }}-macos-x64/build/vltrig vltrig-${{ env.VERSION }}-macos-x64/scripts/vltrig/run.sh staging/
           tar -czvf vltrig-${{ env.VERSION }}-macos-x64.tar.gz -C staging .
           rm staging/*
 
-          cp macos-arm64/build/vltrig macos-arm64/scripts/vltrig/run.sh staging/
+          cp vltrig-${{ env.VERSION }}-macos-arm64/build/vltrig vltrig-${{ env.VERSION }}-macos-arm64/scripts/vltrig/run.sh staging/
           tar -czvf vltrig-${{ env.VERSION }}-macos-arm64.tar.gz -C staging .
           rm staging/*
 
-          cp windows-gcc-x64/build/vltrig.exe windows-gcc-x64/scripts/vltrig/run.cmd staging/
+          cp vltrig-${{ env.VERSION }}-windows-gcc-x64/build/vltrig.exe vltrig-${{ env.VERSION }}-windows-gcc-x64/scripts/vltrig/run.cmd staging/
           cd staging && zip ../vltrig-${{ env.VERSION }}-windows-gcc-x64.zip * && cd ..
 
-          rm -rf staging linux-x64 macos-x64 macos-arm64 windows-gcc-x64
+          rm -rf staging vltrig-${{ env.VERSION }}-*
 
       - name: Generate checksums
         run: |
