@@ -1,3 +1,116 @@
+# vltrig
+
+A fork of [XMRig](https://github.com/xmrig/xmrig) miner tailored for [HashVault](https://hashvault.pro) mining pools.
+
+## Project Goals
+
+**Anti-censorship first.** Helping miners bypass network restrictions and DNS blocking that prevent access to mining pools. Mining should be accessible to everyone, everywhere.
+
+**Focus areas:**
+- Anti-censorship features (DoH, secure DNS resolution)
+- UI/UX improvements
+- HashVault pool optimizations
+- Tracking upstream XMRig for updates and security fixes
+
+**Not changing:**
+- Hashing algorithms
+- Mining performance
+- Donation mechanics (original XMRig donation is preserved)
+
+## Contributing Back
+
+While vltrig is tailored for HashVault pools, improvements that benefit all miners are submitted as pull requests to the upstream [XMRig](https://github.com/xmrig/xmrig) project.
+
+## Versioning
+
+vltrig uses a four-part version: `X.Y.Z.P`
+
+- `X.Y.Z` = upstream XMRig version
+- `.P` = vltrig patch number (resets to 1 on upstream update)
+
+Example:
+```
+XMRig 6.25.0 → vltrig 6.25.0.1 → 6.25.0.2 → 6.25.0.3
+XMRig 6.26.0 → vltrig 6.26.0.1 → 6.26.0.2
+```
+
+## Features
+
+### RandomX Only
+
+vltrig is optimized for Monero mining. Only RandomX (rx/0) algorithm is advertised to pools. Other algorithm families are disabled by default:
+
+- CryptoNight (cn/0, cn/1, cn/2, cn/r, etc.) - filtered out
+- CryptoNight-Lite, Heavy, Pico, Femto - disabled
+- Argon2 - disabled
+- KawPow - disabled
+- GhostRider - disabled
+
+### Default Pool
+
+HashVault pool is preconfigured as default with TLS and certificate pinning:
+- URL: `pool.hashvault.pro:443`
+- TLS: enabled
+- Fingerprint: `420c7850e09b7c0bdcf748a7da9eb3647daf8515718f36d9ccfdd6b9ff834b14`
+
+### DNS-over-HTTPS (DoH)
+
+vltrig includes secure DNS resolution via DNS-over-HTTPS using HTTP/2. When `--dns-pool-ns` is enabled (default), the miner queries the pool's authoritative nameservers directly via DoH, bypassing potentially censored or compromised local DNS resolvers.
+
+#### How it works
+1. Queries a public DoH server for the pool's NS records
+2. Resolves NS hostnames via the same DoH server
+3. Queries the authoritative NS directly via DoH for pool IP addresses
+
+#### Command line options
+| Option | Description |
+|--------|-------------|
+| `--dns-pool-ns` | Enable authoritative NS resolution (default: enabled) |
+| `--no-dns-pool-ns` | Disable, use system DNS |
+| `--dns-doh-primary=HOST` | Primary DoH server (default: `dns.google`) |
+| `--dns-doh-fallback=HOST` | Fallback DoH server (default: `dns.nextdns.io`) |
+
+#### Config file
+```json
+{
+  "dns": {
+    "pool-ns": true,
+    "doh-primary": "dns.google",
+    "doh-fallback": "dns.nextdns.io"
+  }
+}
+```
+
+#### Build dependency
+HTTP/2 support requires **libnghttp2**:
+- Ubuntu/Debian: `apt install libnghttp2-dev`
+- RHEL/CentOS: `yum install libnghttp2-devel`
+- macOS: `brew install nghttp2`
+
+Build with `-DWITH_HTTP2=OFF` to disable HTTP/2 support.
+
+## Building
+
+### Dependencies
+
+Ubuntu/Debian:
+```bash
+apt install build-essential cmake libuv1-dev libssl-dev libhwloc-dev libnghttp2-dev
+```
+
+### Build
+
+```bash
+make release    # Release build
+make debug      # Debug build
+make clean      # Clean build directory
+make rebuild    # Clean + release
+```
+
+Binary will be at `build/vltrig`.
+
+---
+
 # XMRig
 
 [![Github All Releases](https://img.shields.io/github/downloads/xmrig/xmrig/total.svg)](https://github.com/xmrig/xmrig/releases)
