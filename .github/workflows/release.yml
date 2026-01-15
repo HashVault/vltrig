@@ -1,0 +1,196 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version name for artifacts'
+        default: 'test'
+
+env:
+  VERSION: ${{ github.ref_name || inputs.version || 'dev' }}
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libuv1-dev libssl-dev \
+                                  libhwloc-dev libnghttp2-dev
+
+      - name: Build
+        run: make release-ci
+
+      - name: Package
+        run: |
+          cd build
+          tar -czvf vltrig-${{ env.VERSION }}-linux-x64.tar.gz vltrig
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: linux-build
+          path: build/vltrig-*.tar.gz
+
+  windows-gcc:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-libuv
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-hwloc
+            mingw-w64-ucrt-x86_64-nghttp2
+            make git
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build
+        run: make release-ci
+
+      - name: Package
+        shell: pwsh
+        run: |
+          cd build
+          7z a vltrig-${{ env.VERSION }}-windows-gcc-x64.zip vltrig.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-gcc-build
+          path: build/vltrig-*-windows-gcc-x64.zip
+
+  windows-msvc:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install dependencies via vcpkg
+        run: |
+          vcpkg install libuv:x64-windows-static openssl:x64-windows-static `
+                        hwloc:x64-windows-static nghttp2:x64-windows-static
+
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release `
+                   -DWITH_OPENCL=OFF -DWITH_CUDA=OFF `
+                   -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake `
+                   -DVCPKG_TARGET_TRIPLET=x64-windows-static
+          cmake --build . --config Release
+
+      - name: Package
+        run: |
+          cd build\Release
+          7z a vltrig-${{ env.VERSION }}-windows-x64.zip vltrig.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-msvc-build
+          path: build/Release/vltrig-*-windows-x64.zip
+
+  macos-x64:
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          brew install cmake libuv openssl hwloc nghttp2
+
+      - name: Build
+        run: make release-ci
+
+      - name: Package
+        run: |
+          cd build
+          tar -czvf vltrig-${{ env.VERSION }}-macos-x64.tar.gz vltrig
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: macos-x64-build
+          path: build/vltrig-*.tar.gz
+
+  macos-arm64:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          brew install cmake libuv openssl hwloc nghttp2
+
+      - name: Build
+        run: make release-ci
+
+      - name: Package
+        run: |
+          cd build
+          tar -czvf vltrig-${{ env.VERSION }}-macos-arm64.tar.gz vltrig
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: macos-arm64-build
+          path: build/vltrig-*.tar.gz
+
+  release:
+    needs: [linux, windows-gcc, windows-msvc, macos-x64, macos-arm64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          find . -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec mv {} . \;
+          rm -rf */
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Sign checksums
+        if: ${{ secrets.GPG_PRIVATE_KEY != '' }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          cd artifacts
+          echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
+               --passphrase-fd 0 --armor --detach-sign SHA256SUMS
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: artifacts/*
+          generate_release_notes: true
+          tag_name: ${{ env.VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

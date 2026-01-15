@@ -17,6 +17,16 @@ A fork of [XMRig](https://github.com/xmrig/xmrig) miner tailored for [HashVault]
 - Mining performance
 - Donation mechanics (original XMRig donation is preserved)
 
+## Download
+
+Prebuilt binaries are available on the [Releases](https://github.com/HashVault/vltrig/releases) page:
+
+- Linux x64
+- Windows x64 (GCC and MSVC builds)
+- macOS x64 and ARM64 (Apple Silicon)
+
+**Note:** Prebuilt binaries are CPU-only (no OpenCL/CUDA). For GPU mining, build from source with `-DWITH_OPENCL=ON` and/or `-DWITH_CUDA=ON`.
+
 ## Contributing Back
 
 While vltrig is tailored for HashVault pools, improvements that benefit all miners are submitted as pull requests to the upstream [XMRig](https://github.com/xmrig/xmrig) project.
