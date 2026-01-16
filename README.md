@@ -8,6 +8,19 @@ A fork of [XMRig](https://github.com/xmrig/xmrig) miner tailored for [HashVault]
 
 > **Anti-censorship first.** Helping miners bypass network restrictions and DNS blocking that prevent access to mining pools. Mining should be accessible to everyone, everywhere.
 
+### Focus Areas
+
+- Anti-censorship features (DoH, secure DNS resolution)
+- UI/UX improvements
+- HashVault pool optimizations
+- Tracking upstream XMRig for updates and security fixes
+
+### Not Changing
+
+- Hashing algorithms
+- Mining performance
+- Donation mechanics (original XMRig donation is preserved)
+
 ---
 
 ## Table of Contents
@@ -160,11 +173,11 @@ Version format: **`X.Y.Z.P`**
 | Part | Description |
 |------|-------------|
 | `X.Y.Z` | Upstream XMRig version |
-| `.P` | vltrig patch number (resets on upstream update) |
+| `.P` | vltrig patch number (continuous) |
 
 ```
 XMRig 6.25.0 → vltrig 6.25.0.1 → 6.25.0.2 → 6.25.0.3
-XMRig 6.26.0 → vltrig 6.26.0.1 → 6.26.0.2
+XMRig 6.26.0 → vltrig 6.26.0.4 → 6.26.0.5
 ```
 
 ---
