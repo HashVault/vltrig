@@ -129,3 +129,13 @@ const char* xmrig::Tags::profiler()
     return tag;
 }
 #endif
+
+
+#ifdef XMRIG_FEATURE_TLS
+const char *xmrig::Tags::dns()
+{
+    static const char *tag = GREEN_BG_BOLD(WHITE_BOLD_S " dns     ");
+
+    return tag;
+}
+#endif

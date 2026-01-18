@@ -165,14 +165,13 @@ void xmrig::DnsTcpClient::done(bool success)
 
     m_closed = true;
     uv_timer_stop(m_timer);
+    close();  // Must close before callback - callback may destroy this object
 
     if (m_callback) {
         auto callback = std::move(m_callback);
         m_callback = nullptr;
         callback(success, m_records);
     }
-
-    close();
 }
 
 

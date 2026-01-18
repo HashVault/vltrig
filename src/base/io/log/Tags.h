@@ -61,6 +61,10 @@ public:
 #   ifdef XMRIG_FEATURE_PROFILING
     static const char* profiler();
 #   endif
+
+#   ifdef XMRIG_FEATURE_TLS
+    static const char *dns();
+#   endif
 };
 
 

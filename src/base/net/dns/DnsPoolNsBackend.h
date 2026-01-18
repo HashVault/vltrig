@@ -78,6 +78,8 @@ private:
     void onPoolQueryComplete(bool success);
     void onTcpQueryComplete(bool success, const DnsRecords &records);
     void tryNextNs();
+    bool tryTcpWithCachedIp(const HttpData &data);
+    void fallbackToSimpleDoH();
     void fallbackToSystem();
     void notify();
     void onTimeout();

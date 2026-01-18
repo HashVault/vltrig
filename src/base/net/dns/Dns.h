@@ -42,12 +42,16 @@ class Dns
 public:
     inline static const DnsConfig &config()             { return m_config; }
     inline static void set(const DnsConfig &config)     { m_config = config; }
+    inline static bool isResolving()                    { return m_resolving > 0; }
+    inline static void beginResolving()                 { m_resolving++; }
+    inline static void endResolving()                   { m_resolving--; }
 
     static std::shared_ptr<DnsRequest> resolve(const String &host, IDnsListener *listener);
 
 private:
     static DnsConfig m_config;
     static std::map<String, std::shared_ptr<IDnsBackend> > m_backends;
+    static int m_resolving;  // Count of active pool-ns resolutions
 };
 
 

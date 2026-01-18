@@ -19,7 +19,9 @@
 #include <uv.h>
 
 #include "base/io/log/Log.h"
+#include "base/io/log/Tags.h"
 #include "base/kernel/interfaces/IDnsListener.h"
+#include "base/net/dns/Dns.h"
 #include "base/net/dns/DnsPoolNsBackend.h"
 #include "base/net/dns/DnsTcpClient.h"
 #include "base/net/dns/DnsUvBackend.h"
@@ -108,14 +110,15 @@ void xmrig::DnsPoolNsBackend::resolve(const String &host, const std::weak_ptr<ID
         return fallbackToSystem();
     }
 
-    // Detect recursion: if another resolution for this base domain is active,
-    // use simple DoH to avoid circular dependency (e.g., resolving NS hostnames)
-    if (s_activeBaseDomains.count(m_baseDomain) > 0) {
+    // Detect recursion: if another pool-ns resolution is active (nested resolution),
+    // or same base domain is being resolved, use simple DoH to avoid cascading resolutions
+    if (Dns::isResolving() || s_activeBaseDomains.count(m_baseDomain) > 0) {
         return startSimpleDoH();
     }
 
     s_activeBaseDomains.insert(m_baseDomain);
     m_addedToActiveSet = true;
+    Dns::beginResolving();
     startNsLookup();
 }
 
@@ -176,10 +179,8 @@ void xmrig::DnsPoolNsBackend::onHttpData(const HttpData &data)
             m_status = 0;
             m_ts = Chrono::currentMSecsSinceEpoch();
 
-#           ifdef APP_DEBUG
             const char *dohServer = (m_dohServerIndex == 0) ? m_config.dohPrimary().data() : m_config.dohFallback().data();
-            LOG_DEBUG("[DNS] %s -> %s (via %s)", m_host.data(), m_records.get().ip().data(), dohServer);
-#           endif
+            LOG_INFO("%s " CYAN("%s") " -> " GREEN_BOLD("%s") " (via %s)", Tags::dns(), m_host.data(), m_records.get().ip().data(), dohServer);
 
             m_state = IDLE;
             notify();
@@ -203,8 +204,12 @@ void xmrig::DnsPoolNsBackend::onPoolDoHResponse(const HttpData &data)
     }
 
     if (data.status != 200) {
-        LOG_DEBUG("[DNS] DoH to NS failed with status %d", data.status);
-        return startNsResolve();
+        LOG_INFO("%s DoH to " CYAN("%s") " failed (status %d)", Tags::dns(), m_nsServers[m_currentNsIndex].data(), data.status);
+
+        if (!tryTcpWithCachedIp(data)) {
+            startNsResolve();
+        }
+        return;
     }
 
     const auto *response = reinterpret_cast<const uint8_t *>(data.body.data());
@@ -216,7 +221,7 @@ void xmrig::DnsPoolNsBackend::onPoolDoHResponse(const HttpData &data)
         m_ts = Chrono::currentMSecsSinceEpoch();
         onPoolQueryComplete(true);
     }
-    else {
+    else if (!tryTcpWithCachedIp(data)) {
         startNsResolve();
     }
 }
@@ -229,7 +234,7 @@ void xmrig::DnsPoolNsBackend::startSimpleDoH()
     const char *dohServer = (m_dohServerIndex == 0) ? m_config.dohPrimary().data() : m_config.dohFallback().data();
     auto query = DnsWireFormat::buildQuery(m_host, DnsWireFormat::A);
 
-    LOG_DEBUG("[DNS] resolving %s via %s", m_host.data(), dohServer);
+    LOG_DEBUG("%s resolving %s via %s", Tags::dns(), m_host.data(), dohServer);
 
     if (query.empty()) {
         return fallbackToSystem();
@@ -254,9 +259,9 @@ void xmrig::DnsPoolNsBackend::startNsLookup()
     auto query = DnsWireFormat::buildQuery(m_baseDomain, DnsWireFormat::NS);
 
     if (m_dohServerIndex == 0) {
-        LOG_DEBUG("[DNS] looking up NS for %s via %s", m_baseDomain.data(), dohServer);
+        LOG_DEBUG("%s looking up NS for %s via %s", Tags::dns(), m_baseDomain.data(), dohServer);
     } else {
-        LOG_DEBUG("[DNS] retrying NS lookup for %s via %s", m_baseDomain.data(), dohServer);
+        LOG_DEBUG("%s retrying NS lookup for %s via %s", Tags::dns(), m_baseDomain.data(), dohServer);
     }
 
     if (query.empty()) {
@@ -277,12 +282,12 @@ void xmrig::DnsPoolNsBackend::startNsLookup()
 void xmrig::DnsPoolNsBackend::onNsLookupComplete(const std::vector<String> &nsServers)
 {
     if (nsServers.empty()) {
-        return fallbackToSystem();
+        return fallbackToSimpleDoH();
     }
 
 #   ifdef APP_DEBUG
     for (const auto &ns : nsServers) {
-        LOG_DEBUG("[DNS] found NS: %s", ns.data());
+        LOG_DEBUG("%s found NS: %s", Tags::dns(), ns.data());
     }
 #   endif
 
@@ -300,7 +305,7 @@ void xmrig::DnsPoolNsBackend::startNsResolve()
     m_state = NS_RESOLVE;
     const String &nsHost = m_nsServers[m_currentNsIndex];
 
-    LOG_DEBUG("[DNS] resolving NS %s for TCP fallback", nsHost.data());
+    LOG_DEBUG("%s resolving NS %s for TCP fallback", Tags::dns(), nsHost.data());
 
     auto query = DnsWireFormat::buildQuery(nsHost, DnsWireFormat::A);
     if (query.empty()) {
@@ -335,7 +340,7 @@ void xmrig::DnsPoolNsBackend::startPoolQuery()
 
 void xmrig::DnsPoolNsBackend::startPoolQueryDoH(const String &nsHost)
 {
-    LOG_DEBUG("[DNS] querying %s via DoH to %s", m_host.data(), nsHost.data());
+    LOG_DEBUG("%s querying %s via DoH to %s", Tags::dns(), m_host.data(), nsHost.data());
 
     auto query = DnsWireFormat::buildQuery(m_host, DnsWireFormat::A);
     if (query.empty()) {
@@ -363,7 +368,7 @@ void xmrig::DnsPoolNsBackend::startPoolQueryTcp()
     const auto &entry = m_nsEntries.back();
     const String &nsIp = entry.second;
 
-    LOG_DEBUG("[DNS] querying %s via TCP to %s:53", m_host.data(), nsIp.data());
+    LOG_DEBUG("%s querying %s via TCP to %s:53", Tags::dns(), m_host.data(), nsIp.data());
 
     m_state = POOL_QUERY;
     m_poolQueryDoH = false;
@@ -429,12 +434,12 @@ void xmrig::DnsPoolNsBackend::onPoolQueryComplete(bool success)
             }
             ips += record.ip().data();
         }
-        LOG_INFO("[DNS] " CYAN("%s") " -> " GREEN_BOLD("%s") " (%zu records via %s to %s)",
-                 m_host.data(), ips.c_str(), m_records.size(), method, via);
+        LOG_INFO("%s " CYAN("%s") " -> " GREEN_BOLD("%s") " (%zu records via %s to %s)",
+                 Tags::dns(), m_host.data(), ips.c_str(), m_records.size(), method, via);
     }
     else {
-        LOG_INFO("[DNS] " CYAN("%s") " -> " GREEN_BOLD("%s") " (via %s to %s)",
-                 m_host.data(), m_records.get().ip().data(), method, via);
+        LOG_INFO("%s " CYAN("%s") " -> " GREEN_BOLD("%s") " (via %s to %s)",
+                 Tags::dns(), m_host.data(), m_records.get().ip().data(), method, via);
     }
 
     m_state = IDLE;
@@ -451,14 +456,39 @@ void xmrig::DnsPoolNsBackend::tryNextNs()
         startPoolQuery();
     }
     else {
-        fallbackToSystem();
+        fallbackToSimpleDoH();
     }
+}
+
+
+bool xmrig::DnsPoolNsBackend::tryTcpWithCachedIp(const HttpData &data)
+{
+    const String nsIp = data.ip().c_str();
+    if (nsIp.isEmpty()) {
+        return false;
+    }
+
+    const String &nsHost = m_nsServers[m_currentNsIndex];
+    LOG_INFO("%s trying TCP to " CYAN("%s") ":53", Tags::dns(), nsIp.data());
+
+    m_nsEntries.emplace_back(nsHost, nsIp);
+    startPoolQueryTcp();
+    return true;
+}
+
+
+void xmrig::DnsPoolNsBackend::fallbackToSimpleDoH()
+{
+    LOG_INFO("%s pool-ns failed for " CYAN("%s") ", trying simple DoH", Tags::dns(), m_host.data());
+
+    m_dohServerIndex = 0;  // Reset to try both DoH servers
+    startSimpleDoH();
 }
 
 
 void xmrig::DnsPoolNsBackend::fallbackToSystem()
 {
-    LOG_DEBUG("[DNS] falling back to system DNS for %s", m_host.data());
+    LOG_DEBUG("%s falling back to system DNS for %s", Tags::dns(), m_host.data());
 
     m_state = FALLBACK;
     uv_timer_stop(m_timer);
@@ -494,6 +524,7 @@ void xmrig::DnsPoolNsBackend::notify()
 {
     if (m_addedToActiveSet) {
         s_activeBaseDomains.erase(m_baseDomain);
+        Dns::endResolving();
         m_addedToActiveSet = false;
     }
 

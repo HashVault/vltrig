@@ -137,8 +137,8 @@ void xmrig::Network::onActive(IStrategy *strategy, IClient *client)
     }
 
     const char *tlsVersion = client->tlsVersion();
-    LOG_INFO("%s " WHITE_BOLD("use %s ") CYAN_BOLD("%s:%d%s ") GREEN_BOLD("%s") " " BLACK_BOLD("%s"),
-             Tags::network(), client->mode(), pool.host().data(), pool.port(), zmq_buf, tlsVersion ? tlsVersion : "", client->ip().data());
+    LOG_INFO("%s " WHITE_BOLD("use %s ") CYAN_BOLD("%s:%d%s") " (%s)" GREEN_BOLD(" %s"),
+             Tags::network(), client->mode(), pool.host().data(), pool.port(), zmq_buf, client->ip().data(), tlsVersion ? tlsVersion : "");
 
     const char *fingerprint = client->tlsFingerprint();
     if (fingerprint != nullptr) {

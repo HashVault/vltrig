@@ -33,6 +33,7 @@ namespace xmrig {
 
 DnsConfig Dns::m_config;
 std::map<String, std::shared_ptr<IDnsBackend>> Dns::m_backends;
+int Dns::m_resolving = 0;
 
 
 } // namespace xmrig
