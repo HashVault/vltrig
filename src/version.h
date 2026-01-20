@@ -12,7 +12,7 @@
 #define APP_ID        "vltrig"
 #define APP_NAME      "vltrig"
 #define APP_DESC      "vltrig miner"
-#define APP_VERSION   "6.25.0.1"
+#define APP_VERSION   "6.25.0.3"
 #define APP_DOMAIN    "hashvault.pro"
 #define APP_SITE      "hashvault.pro"
 #define APP_COPYRIGHT "Copyright (C) 2016-2025 xmrig.com, 2026 hashvault.pro"
