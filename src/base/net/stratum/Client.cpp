@@ -2,6 +2,7 @@
  * Copyright (c) 2019      jtgrassie   <https://github.com/jtgrassie>
  * Copyright (c) 2018-2024 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2024 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -554,6 +555,7 @@ int64_t xmrig::Client::send(size_t size)
     }
 
     m_expire = Chrono::steadyMSecs() + kResponseTimeout;
+    startTimeout();
     return m_sequence++;
 }
 
@@ -661,8 +663,6 @@ void xmrig::Client::onClose()
 
 void xmrig::Client::parse(char *line, size_t len)
 {
-    startTimeout();
-
     LOG_DEBUG("[%s] received (%d bytes): \"%.*s\"", url(), len, static_cast<int>(len), line);
 
     if (len < 22 || line[0] != '{') {
@@ -779,6 +779,7 @@ void xmrig::Client::parseExtensions(const rapidjson::Value &result)
         else if (strcmp(name, "keepalive") == 0) {
             setExtension(EXT_KEEPALIVE, true);
             startTimeout();
+            LOG_INFO("%s " GREEN("keepalive enabled"), tag());
         }
 #       ifdef XMRIG_FEATURE_TLS
         else if (strcmp(name, "tls") == 0) {
@@ -857,8 +858,6 @@ void xmrig::Client::parseResponse(int64_t id, const rapidjson::Value &result, co
 void xmrig::Client::ping()
 {
     send(snprintf(m_sendBuf.data(), m_sendBuf.size(), "{\"id\":%" PRId64 ",\"jsonrpc\":\"2.0\",\"method\":\"keepalived\",\"params\":{\"id\":\"%s\"}}\n", m_sequence, m_rpcId.data()));
-
-    m_keepAlive = 0;
 }
 
 
