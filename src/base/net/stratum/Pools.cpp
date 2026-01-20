@@ -187,8 +187,9 @@ void xmrig::Pools::load(const IJsonReader &reader)
     }
 
 #   ifdef VLTRIG_DEFAULT_POOL
-    if (defaultPool.isValid()) {
-        m_data.insert(m_data.begin(), std::move(defaultPool));
+    // Only add default pool if no user pools specified
+    if (defaultPool.isValid() && m_data.empty()) {
+        m_data.push_back(std::move(defaultPool));
     }
 #   endif
 
