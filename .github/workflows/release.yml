@@ -103,12 +103,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Install dependencies
+      - name: Install x86_64 Homebrew and dependencies
         run: |
-          brew install cmake libuv openssl hwloc nghttp2
+          # Install x86_64 Homebrew under Rosetta
+          arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          arch -x86_64 /usr/local/bin/brew install cmake libuv openssl hwloc nghttp2
 
       - name: Build
-        run: make release-ci
+        run: |
+          export PATH="/usr/local/bin:$PATH"
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release \
+                   -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+                   -DCMAKE_EXE_LINKER_FLAGS="-lxml2 -liconv -lz -framework OpenCL" \
+                   -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
+                   -DUV_INCLUDE_DIR=/usr/local/opt/libuv/include \
+                   -DUV_LIBRARY=/usr/local/opt/libuv/lib/libuv.a \
+                   -DHWLOC_INCLUDE_DIR=/usr/local/opt/hwloc/include \
+                   -DHWLOC_LIBRARY=/usr/local/opt/hwloc/lib/libhwloc.a
+          make -j$(sysctl -n hw.ncpu)
 
       - name: Stage artifact
         run: |
