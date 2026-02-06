@@ -2,6 +2,7 @@
 
 [![GitHub release](https://img.shields.io/github/v/release/HashVault/vltrig)](https://github.com/HashVault/vltrig/releases)
 [![GitHub downloads](https://img.shields.io/github/downloads/HashVault/vltrig/total)](https://github.com/HashVault/vltrig/releases)
+[![Discord](https://img.shields.io/discord/440787079950106635?logo=discord)](https://discord.hashvault.pro)
 [![GitHub license](https://img.shields.io/github/license/HashVault/vltrig)](https://github.com/HashVault/vltrig/blob/master/LICENSE)
 
 A fork of [XMRig](https://github.com/xmrig/xmrig) miner tailored for [HashVault](https://hashvault.pro) mining pools.
@@ -26,6 +27,7 @@ A fork of [XMRig](https://github.com/xmrig/xmrig) miner tailored for [HashVault]
 ## Table of Contents
 
 - [Download](#download)
+- [HiveOS](#hiveos)
 - [Features](#features)
   - [DNS-over-HTTPS (DoH)](#dns-over-https-doh)
   - [RandomX Only](#randomx-only)
@@ -48,6 +50,44 @@ Prebuilt binaries are available on the [**Releases**](https://github.com/HashVau
 | macOS | ARM64 | Apple Silicon |
 
 > **Note:** Prebuilt binaries are CPU-only. For GPU mining, build from source with `-DWITH_OPENCL=ON` and/or `-DWITH_CUDA=ON`.
+
+---
+
+## HiveOS
+
+vltrig is available as a custom miner for [HiveOS](https://hiveos.farm).
+
+1. Create a **Flight Sheet** and select **Custom** as the miner
+2. Click **Setup Miner Config** and fill in:
+
+| Field | Value |
+|-------|-------|
+| Miner name | `vltrig` |
+| Installation URL | `https://github.com/HashVault/vltrig/releases/latest/download/vltrig-hiveos.tar.gz` |
+| Wallet and worker template | `%WAL%` |
+| Pool URL | `%URL%` |
+| Pass | `%WORKER_NAME%` |
+
+![HiveOS Custom Miner Config](doc/hiveos.png)
+
+3. **Apply Changes** and apply the Flight Sheet to your workers
+
+To update vltrig on an existing rig, SSH in and run:
+
+```bash
+/hive/miners/custom/custom-get https://github.com/HashVault/vltrig/releases/latest/download/vltrig-hiveos.tar.gz -f
+```
+
+The `-f` flag forces reinstallation even if the same version is already present. The miner will restart automatically on the next Flight Sheet apply.
+
+To view the miner log:
+
+- **SSH**:
+  - `miner log` - latest miner output
+  - `tail -f /var/log/miner/vltrig/vltrig.log` - follow the log in real time
+  - `cat /var/log/miner/vltrig/vltrig.log` - full log
+  - `screen -r` - attach to the miner screen session (detach with `Ctrl+A D`)
+- **Web UI**: In the HiveOS dashboard, go to **Farm** -> **Worker** -> **Miner Actions** -> **Miner Log**
 
 ---
 
@@ -176,8 +216,8 @@ Version format: **`X.Y.Z.P`**
 | `.P` | vltrig patch number (continuous) |
 
 ```
-XMRig 6.25.0 → vltrig 6.25.0.1 → 6.25.0.2 → 6.25.0.3
-XMRig 6.26.0 → vltrig 6.26.0.4 → 6.26.0.5
+XMRig 6.25.0 -> vltrig 6.25.0.1 -> 6.25.0.2 -> 6.25.0.3
+XMRig 6.26.0 -> vltrig 6.26.0.4 -> 6.26.0.5
 ```
 
 ---

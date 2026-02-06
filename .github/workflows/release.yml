@@ -51,6 +51,22 @@ jobs:
           name: vltrig-${{ env.VERSION }}-linux-x64
           path: staging/*
 
+      - name: Stage HiveOS artifact
+        run: |
+          mkdir -p hiveos-staging/vltrig
+          cp build/vltrig hiveos-staging/vltrig/
+          cp hiveos/h-manifest.conf hiveos-staging/vltrig/
+          cp hiveos/h-config.sh hiveos-staging/vltrig/
+          cp hiveos/h-run.sh hiveos-staging/vltrig/
+          cp hiveos/h-stats.sh hiveos-staging/vltrig/
+          chmod +x hiveos-staging/vltrig/vltrig hiveos-staging/vltrig/h-*.sh
+
+      - name: Upload HiveOS artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: vltrig-${{ env.VERSION }}-hiveos
+          path: hiveos-staging/
+
   windows-gcc:
     runs-on: windows-latest
     defaults:
@@ -177,6 +193,9 @@ jobs:
           tar -czvf vltrig-${{ env.VERSION }}-macos-x64.tar.gz -C vltrig-${{ env.VERSION }}-macos-x64 .
           tar -czvf vltrig-${{ env.VERSION }}-macos-arm64.tar.gz -C vltrig-${{ env.VERSION }}-macos-arm64 .
           cd vltrig-${{ env.VERSION }}-windows-gcc-x64 && zip ../vltrig-${{ env.VERSION }}-windows-gcc-x64.zip * && cd ..
+
+          # HiveOS package: filename must parse as name=vltrig so custom-get finds vltrig/ directory
+          tar -czvf vltrig-hiveos.tar.gz -C vltrig-${{ env.VERSION }}-hiveos .
 
           rm -rf vltrig-${{ env.VERSION }}-*/
 
