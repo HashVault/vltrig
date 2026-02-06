@@ -655,6 +655,12 @@ void xmrig::Client::onClose()
         delete m_tls;
         m_tls = nullptr;
     }
+
+    if (m_tlsUpgrade) {
+        m_tlsUpgrade = false;
+        connect();
+        return;
+    }
 #   endif
 
     reconnect();
@@ -784,6 +790,15 @@ void xmrig::Client::parseExtensions(const rapidjson::Value &result)
 #       ifdef XMRIG_FEATURE_TLS
         else if (strcmp(name, "tls") == 0) {
             setExtension(EXT_TLS, true);
+
+            if (!isTLS()) {
+                m_pool.setTLS(true);
+                m_tlsUpgrade = true;
+                LOG_INFO("%s " GREEN("upgrading to TLS"), tag());
+
+                close();
+                return;
+            }
         }
 #       endif
     }
@@ -838,6 +853,10 @@ void xmrig::Client::parseResponse(int64_t id, const rapidjson::Value &result, co
             }
 
             close();
+            return;
+        }
+
+        if (m_tlsUpgrade) {
             return;
         }
 

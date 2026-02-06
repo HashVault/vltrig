@@ -135,6 +135,7 @@ private:
     std::vector<char> m_tempBuf;
     String m_rpcId;
     Tls *m_tls                  = nullptr;
+    bool m_tlsUpgrade           = false;
     uint64_t m_expire           = 0;
     uint64_t m_jobs             = 0;
     uint64_t m_keepAlive        = 0;
