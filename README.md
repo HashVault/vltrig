@@ -37,6 +37,7 @@ A fork of [XMRig](https://github.com/xmrig/xmrig) miner tailored for [HashVault]
 - [Building](#building)
 - [Versioning](#versioning)
 - [Upstream XMRig](#upstream-xmrig)
+- [Contributing](#contributing)
 
 ---
 
@@ -56,6 +57,14 @@ Prebuilt binaries are available on the [**Releases**](https://github.com/HashVau
 ---
 
 ## Install via APT (Ubuntu/Debian)
+
+Quick install:
+
+```
+curl -fsSL https://hashvault.github.io/apt/KEY.gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashvault.gpg && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/hashvault.gpg] https://hashvault.github.io/apt stable main" | sudo tee /etc/apt/sources.list.d/hashvault.list && sudo apt update && sudo apt install -y vltrig
+```
+
+Step by step:
 
 ```bash
 # Add the GPG key
@@ -86,7 +95,18 @@ sudo apt update && sudo apt upgrade vltrig
 
 ## Install via DNF (Fedora/RHEL)
 
+Quick install:
+
+```
+sudo rpm --import https://hashvault.github.io/rpm/KEY.gpg && sudo tee /etc/yum.repos.d/hashvault.repo <<< $'[hashvault]\nname=HashVault\nbaseurl=https://hashvault.github.io/rpm\ngpgcheck=1\ngpgkey=https://hashvault.github.io/rpm/KEY.gpg\nenabled=1' && sudo dnf install -y vltrig
+```
+
+Step by step:
+
 ```bash
+# Import the GPG key
+sudo rpm --import https://hashvault.github.io/rpm/KEY.gpg
+
 # Add the repository
 sudo tee /etc/yum.repos.d/hashvault.repo << 'EOF'
 [hashvault]
