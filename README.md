@@ -27,6 +27,8 @@ A fork of [XMRig](https://github.com/xmrig/xmrig) miner tailored for [HashVault]
 ## Table of Contents
 
 - [Download](#download)
+- [Install via APT (Ubuntu/Debian)](#install-via-apt-ubuntudebian)
+- [Install via DNF (Fedora/RHEL)](#install-via-dnf-fedorarhel)
 - [HiveOS](#hiveos)
 - [Features](#features)
   - [DNS-over-HTTPS (DoH)](#dns-over-https-doh)
@@ -50,6 +52,66 @@ Prebuilt binaries are available on the [**Releases**](https://github.com/HashVau
 | macOS | ARM64 | Apple Silicon |
 
 > **Note:** Prebuilt binaries are CPU-only. For GPU mining, build from source with `-DWITH_OPENCL=ON` and/or `-DWITH_CUDA=ON`.
+
+---
+
+## Install via APT (Ubuntu/Debian)
+
+```bash
+# Add the GPG key
+curl -fsSL https://hashvault.github.io/apt/KEY.gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashvault.gpg
+
+# Add the repository
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/hashvault.gpg] https://hashvault.github.io/apt stable main" | sudo tee /etc/apt/sources.list.d/hashvault.list
+
+# Install
+sudo apt update && sudo apt install vltrig
+```
+
+The binary installs to `/usr/bin/vltrig` with a default config at `/etc/vltrig/config.json`.
+
+Start and enable the service:
+
+```bash
+sudo systemctl enable --now vltrig
+```
+
+To update:
+
+```bash
+sudo apt update && sudo apt upgrade vltrig
+```
+
+---
+
+## Install via DNF (Fedora/RHEL)
+
+```bash
+# Add the repository
+sudo tee /etc/yum.repos.d/hashvault.repo << 'EOF'
+[hashvault]
+name=HashVault
+baseurl=https://hashvault.github.io/rpm
+gpgcheck=1
+gpgkey=https://hashvault.github.io/rpm/KEY.gpg
+enabled=1
+EOF
+
+# Install
+sudo dnf install vltrig
+```
+
+Start and enable the service:
+
+```bash
+sudo systemctl enable --now vltrig
+```
+
+To update:
+
+```bash
+sudo dnf upgrade vltrig
+```
 
 ---
 

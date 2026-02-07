@@ -180,10 +180,42 @@ jobs:
     needs: [linux, windows-gcc, macos-x64, macos-arm64]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
       - name: Download all artifacts
         uses: actions/download-artifact@v6
         with:
           path: artifacts
+
+      - name: Build .deb package
+        run: |
+          PKG_VERSION="${VERSION#v}"
+          scripts/build-deb.sh \
+            "artifacts/vltrig-${{ env.VERSION }}-linux-x64/vltrig" \
+            "$PKG_VERSION" \
+            "src/config.json" \
+            "vltrig" \
+            "dist/vltrig.service" \
+            "vltrig miner - high performance RandomX CPU miner"
+          mv vltrig_*.deb artifacts/
+        env:
+          VERSION: ${{ env.VERSION }}
+
+      - name: Build .rpm package
+        run: |
+          sudo apt-get update && sudo apt-get install -y rpm
+          PKG_VERSION="${VERSION#v}"
+          scripts/build-rpm.sh \
+            "artifacts/vltrig-${{ env.VERSION }}-linux-x64/vltrig" \
+            "$PKG_VERSION" \
+            "src/config.json" \
+            "vltrig" \
+            "dist/vltrig.service" \
+            "vltrig miner - high performance RandomX CPU miner"
+          mv vltrig-*.rpm artifacts/
+        env:
+          VERSION: ${{ env.VERSION }}
 
       - name: Package artifacts
         run: |
@@ -219,6 +251,32 @@ jobs:
           echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
                --passphrase-fd 0 --armor --detach-sign SHA256SUMS
 
+      - name: Sign .rpm package
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+          echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
+          gpgconf --kill gpg-agent
+          gpgconf --launch gpg-agent
+          KEYGRIP=$(gpg --with-keygrip --list-secret-keys 2>/dev/null | grep -m1 Keygrip | awk '{print $3}')
+          echo "$GPG_PASSPHRASE" | /usr/lib/gnupg/gpg-preset-passphrase --preset "$KEYGRIP"
+          printf '%s\n' '%_gpg_name HashVault <root@hashvault.pro>' > ~/.rpmmacros
+          rpmsign --addsign artifacts/vltrig-*.x86_64.rpm
+
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: vltrig-deb
+          path: artifacts/vltrig_*_amd64.deb
+
+      - name: Upload .rpm artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: vltrig-rpm
+          path: artifacts/vltrig-*.x86_64.rpm
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -228,3 +286,50 @@ jobs:
           tag_name: ${{ env.VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-repos:
+    needs: [release]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y apt-utils createrepo-c rpm
+
+      - name: Download .deb artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: vltrig-deb
+          path: .
+
+      - name: Download .rpm artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: vltrig-rpm
+          path: .
+
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          if [ -z "$GPG_PRIVATE_KEY" ]; then
+            echo "GPG_PRIVATE_KEY not set, skipping repo update"
+            exit 0
+          fi
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+
+      - name: Update APT repository
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          PAGES_DEPLOY_KEY: ${{ secrets.PAGES_DEPLOY_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: scripts/update-apt-repo.sh vltrig_*_amd64.deb
+
+      - name: Update RPM repository
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          PAGES_DEPLOY_KEY: ${{ secrets.PAGES_DEPLOY_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: scripts/update-rpm-repo.sh vltrig-*.x86_64.rpm
