@@ -43,6 +43,7 @@ jobs:
         run: |
           mkdir -p staging
           cp build/vltrig scripts/vltrig/run.sh src/config.json staging/
+          chmod +x staging/vltrig staging/run.sh
           cd staging && sha256sum * > SHA256SUMS
 
       - name: Upload artifact
@@ -143,6 +144,7 @@ jobs:
         run: |
           mkdir -p staging
           cp build/vltrig scripts/vltrig/run.sh src/config.json staging/
+          chmod +x staging/vltrig staging/run.sh
           cd staging && shasum -a 256 * > SHA256SUMS
 
       - name: Upload artifact
@@ -168,6 +170,7 @@ jobs:
         run: |
           mkdir -p staging
           cp build/vltrig scripts/vltrig/run.sh src/config.json staging/
+          chmod +x staging/vltrig staging/run.sh
           cd staging && shasum -a 256 * > SHA256SUMS
 
       - name: Upload artifact
@@ -216,6 +219,17 @@ jobs:
           mv vltrig-*.rpm artifacts/
         env:
           VERSION: ${{ env.VERSION }}
+
+      - name: Fix permissions
+        run: |
+          chmod +x artifacts/vltrig-${{ env.VERSION }}-linux-x64/vltrig
+          chmod +x artifacts/vltrig-${{ env.VERSION }}-linux-x64/run.sh
+          chmod +x artifacts/vltrig-${{ env.VERSION }}-macos-x64/vltrig
+          chmod +x artifacts/vltrig-${{ env.VERSION }}-macos-x64/run.sh
+          chmod +x artifacts/vltrig-${{ env.VERSION }}-macos-arm64/vltrig
+          chmod +x artifacts/vltrig-${{ env.VERSION }}-macos-arm64/run.sh
+          chmod +x artifacts/vltrig-${{ env.VERSION }}-hiveos/vltrig/vltrig
+          chmod +x artifacts/vltrig-${{ env.VERSION }}-hiveos/vltrig/h-*.sh
 
       - name: Package artifacts
         run: |
