@@ -49,7 +49,7 @@ conf=$(cat <<CONF
 {
     "autosave": false,
     "background": false,
-    "colors": false,
+    "colors": true,
     "randomx": {
         "init": -1,
         "init-avx2": -1,
@@ -95,7 +95,7 @@ conf=$(cat <<CONF
         "doh-primary": "dns.google",
         "doh-fallback": "dns.nextdns.io"
     },
-    "verbose": 0,
+    "verbose": 1,
     "watch": false,
     "pause-on-battery": false,
     "pause-on-active": false
