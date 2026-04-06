@@ -1,6 +1,6 @@
 /* XMRig
- * Copyright (c) 2018-2025 SChernykh   <https://github.com/SChernykh>
- * Copyright (c) 2016-2025 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2018-2026 SChernykh   <https://github.com/SChernykh>
+ * Copyright (c) 2016-2026 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -12,14 +12,14 @@
 #define APP_ID        "vltrig"
 #define APP_NAME      "vltrig"
 #define APP_DESC      "vltrig miner"
-#define APP_VERSION   "6.25.0.4"
+#define APP_VERSION   "6.26.0.4"
 #define APP_DOMAIN    "hashvault.pro"
 #define APP_SITE      "hashvault.pro"
-#define APP_COPYRIGHT "Copyright (C) 2016-2025 xmrig.com, 2026 hashvault.pro"
+#define APP_COPYRIGHT "Copyright (C) 2016-2026 xmrig.com, 2026 hashvault.pro"
 #define APP_KIND      "miner"
 
 #define APP_VER_MAJOR  6
-#define APP_VER_MINOR  25
+#define APP_VER_MINOR  26
 #define APP_VER_PATCH  0
 
 #ifdef _MSC_VER
