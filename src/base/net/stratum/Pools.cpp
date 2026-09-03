@@ -50,6 +50,7 @@ const char *Pools::kRetryPause      = "retry-pause";
 
 #ifdef VLTRIG_DEFAULT_POOL
 const char *Pools::kDefaultPool           = "pool.hashvault.pro:443";
+const char *Pools::kDefaultPoolBackup     = "pool.hashvault.sh:443";
 const char *Pools::kDefaultPoolFingerprint = "420c7850e09b7c0bdcf748a7da9eb3647daf8515718f36d9ccfdd6b9ff834b14";
 #endif
 
@@ -153,6 +154,10 @@ void xmrig::Pools::load(const IJsonReader &reader)
     Pool defaultPool(kDefaultPool);
     defaultPool.setTLS(true);
     defaultPool.setFingerprint(kDefaultPoolFingerprint);
+
+    Pool backupPool(kDefaultPoolBackup);
+    backupPool.setTLS(true);
+    backupPool.setFingerprint(kDefaultPoolFingerprint);
 #   endif
 
     const rapidjson::Value &pools = reader.getArray(kPools);
@@ -170,12 +175,15 @@ void xmrig::Pools::load(const IJsonReader &reader)
 
             if (user) {
                 defaultPool.setUser(user);
+                backupPool.setUser(user);
             }
             if (pass) {
                 defaultPool.setPassword(pass);
+                backupPool.setPassword(pass);
             }
             if (rigId) {
                 defaultPool.setRigId(rigId);
+                backupPool.setRigId(rigId);
             }
 #           endif
 
@@ -187,9 +195,13 @@ void xmrig::Pools::load(const IJsonReader &reader)
     }
 
 #   ifdef VLTRIG_DEFAULT_POOL
-    // Only add default pool if no user pools specified
+    // Only add default pools if no user pools specified
     if (defaultPool.isValid() && m_data.empty()) {
         m_data.push_back(std::move(defaultPool));
+
+        if (backupPool.isValid()) {
+            m_data.push_back(std::move(backupPool));
+        }
     }
 #   endif
 

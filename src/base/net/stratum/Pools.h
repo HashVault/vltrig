@@ -52,6 +52,7 @@ public:
 
 #   ifdef VLTRIG_DEFAULT_POOL
     static const char *kDefaultPool;
+    static const char *kDefaultPoolBackup;
     static const char *kDefaultPoolFingerprint;
 #   endif
 

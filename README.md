@@ -234,11 +234,12 @@ Optimized for Monero mining. Only RandomX (`rx/0`) algorithm is advertised to po
 
 ### Default Pool
 
-HashVault pool is preconfigured as default with TLS and certificate pinning.
+HashVault pools are preconfigured as default with TLS and certificate pinning. The backup pool is used automatically if the primary is unreachable.
 
 | Setting | Value |
 |---------|-------|
-| URL | `pool.hashvault.pro:443` |
+| Primary URL | `pool.hashvault.pro:443` |
+| Backup URL | `pool.hashvault.sh:443` |
 | TLS | Enabled |
 | Fingerprint | `420c7850e09b7c0bdcf748a7da9eb3647daf8515718f36d9ccfdd6b9ff834b14` |
 
