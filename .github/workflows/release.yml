@@ -122,10 +122,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install x86_64 Homebrew and dependencies
+        env:
+          HOMEBREW_NO_PATH_SHADOW_CHECK: 1
+          HOMEBREW_NO_ENV_HINTS: 1
         run: |
           # Install x86_64 Homebrew under Rosetta
           arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          arch -x86_64 /usr/local/bin/brew install cmake libuv openssl hwloc nghttp2
+          # openssl@3 is pulled in as an nghttp2 dependency and its
+          # post-install (cert rehash) fails under Rosetta, failing the
+          # whole install. The libraries and headers are still installed
+          # correctly, so tolerate the failure and verify what we need.
+          arch -x86_64 /usr/local/bin/brew install cmake libuv hwloc nghttp2 || true
+          [ -e /usr/local/opt/openssl ] || ln -sfn /usr/local/opt/openssl@3 /usr/local/opt/openssl
+          test -e /usr/local/opt/openssl/include/openssl/ssl.h
+          test -e /usr/local/opt/libuv/lib/libuv.a
+          test -e /usr/local/opt/hwloc/lib/libhwloc.a
+          test -x /usr/local/bin/cmake
 
       - name: Build
         run: |
