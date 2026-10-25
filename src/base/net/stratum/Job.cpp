@@ -9,6 +9,7 @@
  * Copyright 2019      Howard Chu  <https://github.com/hyc>
  * Copyright 2018-2024 SChernykh   <https://github.com/SChernykh>
  * Copyright 2016-2024 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,9 +26,12 @@
  */
 
 #include <cassert>
+#include <cinttypes>
+#include <cstdio>
 #include <cstring>
 
 #include "base/net/stratum/Job.h"
+#include "base/io/log/Log.h"
 #include "base/tools/Alignment.h"
 #include "base/tools/Buffer.h"
 #include "base/tools/Cvt.h"
@@ -228,6 +232,25 @@ uint32_t xmrig::Job::getNumTransactions() const
 }
 
 
+void xmrig::Job::formatAux(char *buf, size_t size) const
+{
+    size_t offset = 0;
+    buf[0]        = '\0';
+
+    for (const auto &aux : m_aux) {
+        const char *chain = aux.chain.isEmpty() ? "" : aux.chain.data();
+        const char *hash  = aux.hash.isEmpty() ? "" : aux.hash.data();
+        const int rc      = snprintf(buf + offset, size - offset, " aux %s%s" WHITE_BOLD("%" PRIu64) "%s%s", chain, *chain ? " " : "", aux.height, *hash ? " " : "", hash);
+
+        if (rc < 0 || static_cast<size_t>(rc) >= size - offset) {
+            break;
+        }
+
+        offset += static_cast<size_t>(rc);
+    }
+}
+
+
 void xmrig::Job::copy(const Job &other)
 {
     m_algorithm  = other.m_algorithm;
@@ -243,6 +266,7 @@ void xmrig::Job::copy(const Job &other)
     m_seed       = other.m_seed;
     m_extraNonce = other.m_extraNonce;
     m_poolWallet = other.m_poolWallet;
+    m_aux        = other.m_aux;
 
     memcpy(m_blob, other.m_blob, sizeof(m_blob));
 
@@ -295,6 +319,7 @@ void xmrig::Job::move(Job &&other)
     m_seed       = std::move(other.m_seed);
     m_extraNonce = std::move(other.m_extraNonce);
     m_poolWallet = std::move(other.m_poolWallet);
+    m_aux        = std::move(other.m_aux);
 
     memcpy(m_blob, other.m_blob, sizeof(m_blob));
 

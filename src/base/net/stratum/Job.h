@@ -9,6 +9,7 @@
  * Copyright 2019      Howard Chu  <https://github.com/hyc>
  * Copyright 2018-2025 SChernykh   <https://github.com/SChernykh>
  * Copyright 2016-2025 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,6 +30,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 #include "base/crypto/Algorithm.h"
 #include "base/tools/Buffer.h"
@@ -47,6 +49,14 @@ public:
     // Round it up to 408 (136*3) for a convenient keccak calculation in OpenCL
     static constexpr const size_t kMaxBlobSize = 408;
     static constexpr const size_t kMaxSeedSize = 32;
+    static constexpr const size_t kMaxAux      = 4;
+
+    struct Aux
+    {
+        String chain;
+        String hash;
+        uint64_t height;
+    };
 
     Job() = default;
     Job(bool nicehash, const Algorithm &algorithm, const String &clientId);
@@ -70,6 +80,7 @@ public:
     inline bool setId(const char *id)                   { return (m_id = id); }
     inline const Algorithm &algorithm() const           { return m_algorithm; }
     inline const Buffer &seed() const                   { return m_seed; }
+    inline const std::vector<Aux> &aux() const          { return m_aux; }
     inline const String &clientId() const               { return m_clientId; }
     inline const String &extraNonce() const             { return m_extraNonce; }
     inline const String &id() const                     { return m_id; }
@@ -93,6 +104,7 @@ public:
     inline void setBackend(uint32_t backend)            { m_backend = backend; }
     inline void setClientId(const String &id)           { m_clientId = id; }
     inline void setExtraNonce(const String &extraNonce) { m_extraNonce = extraNonce; }
+    inline void addAux(Aux &&aux)                       { if (m_aux.size() < kMaxAux) { m_aux.emplace_back(std::move(aux)); } }
     inline void setHeight(uint64_t height)              { m_height = height; }
     inline void setIndex(uint8_t index)                 { m_index = index; }
     inline void setPoolWallet(const String &poolWallet) { m_poolWallet = poolWallet; }
@@ -142,6 +154,7 @@ public:
     inline bool hasMinerSignature() const { return m_hasMinerSignature; }
 
     uint32_t getNumTransactions() const;
+    void formatAux(char *buf, size_t size) const;
 
 private:
     void copy(const Job &other);
@@ -151,6 +164,7 @@ private:
     bool m_nicehash     = false;
     Buffer m_seed;
     size_t m_size       = 0;
+    std::vector<Aux> m_aux;
     String m_clientId;
     String m_extraNonce;
     String m_id;

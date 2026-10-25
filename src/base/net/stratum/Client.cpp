@@ -423,6 +423,15 @@ bool xmrig::Client::parseJob(const rapidjson::Value &params, int *code)
 
     job.setHeight(Json::getUint64(params, "height"));
 
+    const auto &aux = Json::getArray(params, "aux");
+    if (aux.IsArray()) {
+        for (const auto &value : aux.GetArray()) {
+            if (value.IsObject() && Json::getUint64(value, "height") > 0) {
+                job.addAux({ Json::getString(value, "chain", 16), Json::getString(value, "hash", 8), Json::getUint64(value, "height") });
+            }
+        }
+    }
+
     if (!verifyAlgorithm(job.algorithm(), algo)) {
         *code = 6;
         return false;
