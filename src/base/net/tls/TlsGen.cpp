@@ -1,6 +1,7 @@
 /* XMRig
  * Copyright (c) 2018-2023 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2023 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2026      HashVault   <https://github.com/HashVault>, <root@hashvault.pro>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -114,12 +115,19 @@ bool xmrig::TlsGen::generate_x509(const char *commonName)
     X509_gmtime_adj(X509_get_notBefore(m_x509), 0);
     X509_gmtime_adj(X509_get_notAfter(m_x509), 315360000L);
 
-    auto name = X509_get_subject_name(m_x509);
-    X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, reinterpret_cast<const uint8_t *>(commonName), -1, -1, 0);
+    // X509_get_subject_name() returns a const pointer since OpenSSL 4.0, so build the name separately.
+    auto name = X509_NAME_new();
+    if (!name) {
+        return false;
+    }
 
-    X509_set_issuer_name(m_x509, name);
+    const bool rc = X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, reinterpret_cast<const uint8_t *>(commonName), -1, -1, 0) &&
+                    X509_set_subject_name(m_x509, name) &&
+                    X509_set_issuer_name(m_x509, name);
 
-    return X509_sign(m_x509, m_pkey, EVP_sha256());
+    X509_NAME_free(name);
+
+    return rc && X509_sign(m_x509, m_pkey, EVP_sha256());
 }
 
 
