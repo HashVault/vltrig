@@ -351,9 +351,12 @@ Version format: **`X.Y.Z.P`**
 | `X.Y.Z` | Upstream XMRig version |
 | `.P` | vltrig patch number (continuous) |
 
+An upstream merge updates `X.Y.Z` and keeps `.P`. Each vltrig change increments `.P`.
+
 ```
-XMRig 6.25.0 -> vltrig 6.25.0.1 -> 6.25.0.2 -> 6.25.0.3
-XMRig 6.26.0 -> vltrig 6.26.0.4 -> 6.26.0.5
+XMRig 6.25.0 -> vltrig 6.25.0.1 -> 6.25.0.2 -> 6.25.0.3 -> 6.25.0.4
+XMRig 6.26.0 -> vltrig 6.26.0.4 -> 6.26.0.5 -> 6.26.0.6
+XMRig 6.27.0 -> vltrig 6.27.0.6
 ```
 
 ---
