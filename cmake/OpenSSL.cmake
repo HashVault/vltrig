@@ -7,7 +7,7 @@ if (WITH_TLS)
         set(OPENSSL_USE_STATIC_LIBS TRUE)
         set(OPENSSL_MSVC_STATIC_RT TRUE)
 
-        set(EXTRA_LIBS ${EXTRA_LIBS} crypt32)
+        set(EXTRA_LIBS ${EXTRA_LIBS} crypt32 bcrypt)
     elseif (APPLE)
         set(OPENSSL_USE_STATIC_LIBS TRUE)
     endif()
